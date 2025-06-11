@@ -1,7 +1,7 @@
-AGENT_EXTRACT_TEXT = "gpt-4o-mini"
-AGENT1 = "gpt-4o-mini"
-AGENT2 = "claude-3.7-sonnet"
-AGENT3 = "deepseek-v3-0324"
+AGENT_EXTRACT_TEXT = "openai/gpt-3.5-turbo"
+AGENT1 = "openai/gpt-4.1"
+AGENT2 = "anthropic/claude-3.7-sonnet"
+AGENT3 = "deepseek/deepseek-chat-v3-0324"
 
 
 

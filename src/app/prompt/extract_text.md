@@ -21,5 +21,4 @@ Output: tongkol
 Input: "Poisson maquereau entier 1kg"  
 Output: maquereau
 
-Now extract from:
 Input: "{{ product_description }}"
