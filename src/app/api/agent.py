@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import requests
 
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
@@ -16,23 +16,6 @@ agent_prompt = load_prompt('agent')
 extract_text_prompt = load_prompt('extract_text')
 api_key = os.getenv("OPENROUTER_API_KEY")
 api_base = os.getenv("OPENROUTER_API_BASE")
-
-
-def get_model_display_name(model: str) -> str:
-    """
-    Get a human-readable display name for the model.
-    Args:
-        model: The model identifier
-    Returns:
-        A human-readable name for the model
-    """
-    model_names = {
-        "gpt-4o-mini": "GPT-4o-mini",
-        "claude-3.7-sonnet": "Claude 3.7 Sonnet",
-        "deepseek-v3-0324": "DeepSeek V3 0324"
-    }
-    return model_names.get(model, model)
-
 
 def create_agent(prompt_template: str, input_text: dict, model: str):
     """
@@ -96,7 +79,7 @@ def agent1(input_text: str):
         The answer from the agent
     """
     return create_agent(agent_prompt, {
-        "agent_name": get_model_display_name(AGENT1),
+        "agent_name": AGENT1,
         "fish_input": input_text
     }, AGENT1)
 
@@ -110,7 +93,7 @@ def agent2(input_text: str):
         The answer from the agent
     """
     return create_agent(agent_prompt, {
-        "agent_name": get_model_display_name(AGENT2),
+        "agent_name": AGENT2,
         "fish_input": input_text
     }, AGENT2)
 
@@ -124,7 +107,7 @@ def agent3(input_text: str):
         The answer from the agent
     """
     return create_agent(agent_prompt, {
-        "agent_name": get_model_display_name(AGENT3),
+        "agent_name": AGENT3,
         "fish_input": input_text
     }, AGENT3)
 

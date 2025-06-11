@@ -2,7 +2,8 @@ import json
 import time
 
 from typing import Dict, Optional
-from app.api.agent import agent1, agent2, agent3, extract_text, get_model_display_name
+from app.api.agent import agent1, agent2, agent3, extract_text
+from app.setting.setting import AGENT1, AGENT2, AGENT3, AGENT_EXTRACT_TEXT
 
 def test_fish_extraction(product_desc: str) -> Optional[str]:
     """
@@ -38,23 +39,23 @@ def test_agent_analysis(fish_name: str) -> Dict[str, Optional[str]]:
     """
     results = {}
     agents = {
-        "Agent 1": agent1,
-        "Agent 2": agent2,
-        "Agent 3": agent3
+        "Agent 1": (agent1, AGENT1),
+        "Agent 2": (agent2, AGENT2),
+        "Agent 3": (agent3, AGENT3)
     }
 
-    for agent_name, agent_func in agents.items():
+    for agent_name, (agent_func, model_name) in agents.items():
         try:
-            print(f"\nTesting {agent_name}...")
+            print(f"\nTesting {agent_name} (Model: {model_name})...")
             response = agent_func(fish_name)
             content = response['choices'][0]['message']['content'].strip()
             model = response.get('model', None)
-            display_name = get_model_display_name(model) if model else agent_name
 
             try:
                 result_json = json.loads(content)
-                # Update the 'agent' field in the JSON output
-                result_json['agent'] = display_name
+                # Update the 'agent' and 'model' fields in the JSON output
+                result_json['agent'] = agent_name
+                result_json['model'] = model_name
                 print(json.dumps(result_json, indent=2))
                 results[agent_name] = json.dumps(result_json)
             except json.JSONDecodeError:
@@ -67,23 +68,6 @@ def test_agent_analysis(fish_name: str) -> Dict[str, Optional[str]]:
             results[agent_name] = None
 
     return results
-
-
-def test_model_mapping() -> None:
-    """
-    Test the model name mapping function.
-    """
-    test_models = [
-        "gpt-4o-mini",
-        "claude-3.7-sonnet",
-        "deepseek-v3-0324",
-        "unknown-model"
-    ]
-
-    print("\nTesting Model Name Mapping:")
-    for model in test_models:
-        display_name = get_model_display_name(model)
-        print(f"Model: {model} -> Display Name: {display_name}")
 
 
 def main():
@@ -101,8 +85,6 @@ def main():
         fish_name = test_fish_extraction(desc)
         if fish_name:
             test_agent_analysis(fish_name)
-
-    test_model_mapping()
 
 
 if __name__ == "__main__":
