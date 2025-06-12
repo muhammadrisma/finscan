@@ -4,17 +4,31 @@ import time
 from typing import Dict, Optional
 from app.api.agent import agent1, agent2, agent3, extract_text
 from app.setting.setting import AGENT1, AGENT2, AGENT3, AGENT_EXTRACT_TEXT
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.api.api import router as api_router
 
+app = FastAPI(
+    title="FinScan API",
+    description="API for fish product analysis and processing",
+    version="1.0.0"
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(api_router)
+
+# Test functions are commented out as they are only for development purposes
+"""
 def test_fish_extraction(product_desc: str) -> Optional[str]:
-    """
-    Test fish name extraction from product description.
-
-    Args:
-        product_desc: Product description text
-
-    Returns:
-        Extracted fish name, or None if an error occurred
-    """
     try:
         response = extract_text(product_desc)
         print("Raw extract_text response:", response)
@@ -26,17 +40,7 @@ def test_fish_extraction(product_desc: str) -> Optional[str]:
         print(f"Error extracting fish name: {e}")
         return None
 
-
 def test_agent_analysis(fish_name: str) -> Dict[str, Optional[str]]:
-    """
-    Test all agents with the extracted fish name.
-
-    Args:
-        fish_name: Extracted fish name
-
-    Returns:
-        Dictionary containing results from all agents
-    """
     results = {}
     agents = {
         "Agent 1": (agent1, AGENT1),
@@ -53,7 +57,6 @@ def test_agent_analysis(fish_name: str) -> Dict[str, Optional[str]]:
 
             try:
                 result_json = json.loads(content)
-                # Update the 'agent' and 'model' fields in the JSON output
                 result_json['agent'] = agent_name
                 result_json['model'] = model_name
                 print(json.dumps(result_json, indent=2))
@@ -69,9 +72,7 @@ def test_agent_analysis(fish_name: str) -> Dict[str, Optional[str]]:
 
     return results
 
-
 def main():
-    # Test product descriptions
     test_cases = [
         "Iwak tenggiri 10 box per box 100 gram",
         "Fish sardine frozen block 5kg",
@@ -86,6 +87,6 @@ def main():
         if fish_name:
             test_agent_analysis(fish_name)
 
-
 if __name__ == "__main__":
     main()
+"""

@@ -111,3 +111,32 @@ def agent3(input_text: str):
         "fish_input": input_text
     }, AGENT3)
 
+
+def process_log(id: str, original_description: str):
+    """
+    Process the input through all three agents and return a structured log.
+    Args:
+        id: The unique identifier for the log entry
+        original_description: The original product description
+    Returns:
+        A dictionary containing the processing log with all agent results
+    """
+    try:
+        # Process through all three agents
+        agent1_result = agent1(original_description)
+        agent2_result = agent2(original_description)
+        agent3_result = agent3(original_description)
+
+        # Create the processing log
+        processing_log = {
+            "id": id,
+            "original_description": original_description,
+            "agent_1_result": agent1_result,
+            "agent_2_result": agent2_result,
+            "agent_3_result": agent3_result
+        }
+
+        return processing_log
+    except Exception as e:
+        raise Exception(f"Error in processing log: {str(e)}")
+
