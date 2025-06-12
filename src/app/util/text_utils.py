@@ -11,16 +11,10 @@ def normalize_latin_name(name: str) -> str:
     if not name:
         return ""
     
-    # Convert to lowercase
     name = name.lower()
-    
-    # Remove extra spaces
     name = ' '.join(name.split())
-    
-    # Remove special characters except spaces and dots
     name = re.sub(r'[^a-z\s.]', '', name)
     
-    # Handle common variations
     replacements = {
         'spp': 'species',
         'sp': 'species',

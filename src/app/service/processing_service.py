@@ -19,17 +19,14 @@ class ProcessingService:
             A dictionary containing the processing log with all agent results
         """
         try:
-            # Process through all three agents
             agent1_response = self.fish_service.agent1(extracted_fish_name)
             agent2_response = self.fish_service.agent2(extracted_fish_name)
             agent3_response = self.fish_service.agent3(extracted_fish_name)
 
-            # Extract content from each agent's response
             agent1_result = self.fish_service.extract_agent_content(agent1_response)
             agent2_result = self.fish_service.extract_agent_content(agent2_response)
             agent3_result = self.fish_service.extract_agent_content(agent3_response)
 
-            # Create the processing log
             processing_log = {
                 "id": id,
                 "original_description": extracted_fish_name,
@@ -56,23 +53,17 @@ class ProcessingService:
             ResultLogResponse containing the processed results
         """
         try:
-            # First extract fish name from the input
             extracted_fish_name = self.text_service.extract_text(original_description)
-            
-            # Then get the processing log using the extracted fish name
             processing_log = self.process_log(id, extracted_fish_name)
             
-            # Get agent results
             agent_results = [
                 processing_log["agent_1_result"],
                 processing_log["agent_2_result"],
                 processing_log["agent_3_result"]
             ]
             
-            # Check agent agreement
             flag, fish_name_english, fish_name_latin, _ = self.fish_service.check_agent_agreement(agent_results)
             
-            # Create result log
             result_log = ResultLogResponse(
                 id=id,
                 original_description=original_description,
@@ -82,7 +73,6 @@ class ProcessingService:
                 flag=flag
             )
             
-            # Save result log to file
             filepath = self.file_service.save_result_log(result_log, id)
             print(f"Result log saved to: {filepath}")
             

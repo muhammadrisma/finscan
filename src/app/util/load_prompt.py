@@ -9,7 +9,6 @@ def load_prompt(prompt_name: str) -> str:
     Returns:
         The content of the prompt file
     """
-    # Get the prompts directory path
     current_dir = Path(__file__).parent.parent
     prompt_path = current_dir / 'prompt' / f'{prompt_name}.md'
     
