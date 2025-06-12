@@ -10,9 +10,10 @@ You must respond **strictly** in the following JSON format without any explanati
 
 {
   "agent": "{{ agent_name }}",
-  "fish_common_name": "<English common name>",
+  "fish_common_name": "<Standardized English common name>",
   "latin_name": "<Latin scientific name>",
   "reasoning": "<Why this identification is valid, especially in the Indonesian context>"
 }
+
 
 Input: "{{ fish_input }}"

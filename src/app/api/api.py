@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.schema.processing_log import ProcessingLogRequest, ProcessingLogResponse
-from app.api.agent import process_log
+from app.schema.result_log import ResultLogRequest, ResultLogResponse
+from app.api.agent import process_log, process_result_log
 
 router = APIRouter(
     prefix="/api",
@@ -15,6 +16,17 @@ async def create_processing_log(request: ProcessingLogRequest):
     """
     try:
         result = process_log(request.id, request.original_description)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/result/log", response_model=ResultLogResponse)
+async def create_result_log(request: ResultLogRequest):
+    """
+    Create a new result log with agent agreement check.
+    """
+    try:
+        result = process_result_log(request.id, request.original_description)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 

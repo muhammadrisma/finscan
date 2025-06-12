@@ -16,4 +16,4 @@ class ProcessingLogResponse(BaseModel):
     original_description: str
     agent_1_result: AgentResult
     agent_2_result: AgentResult
-    agent_3_result: AgentResult 
+    agent_3_result: AgentResult
