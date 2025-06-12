@@ -1,8 +1,0 @@
-{
-  "id": "1",
-  "original_description": "iwak tenggiri 10 kg",
-  "extracted_fish_name": "tenggiri",
-  "fish_name_english": "Narrow-barred Spanish mackerel",
-  "fish_name_latin": "Scomberomorus commerson",
-  "flag": true
-}

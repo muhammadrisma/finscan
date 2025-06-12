@@ -18,3 +18,5 @@ src/app/prompt/__pycache__
 src/app/app/__pycache__
 src/app/app.egg-info
 src/app/app.egg-info
+
+*.txt

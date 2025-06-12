@@ -1,0 +1,22 @@
+{
+  "id": "1",
+  "original_description": "tongkol",
+  "agent_1_result": {
+    "agent": "openai/gpt-4.1",
+    "fish_common_name": "Mackerel Tuna",
+    "latin_name": "Euthynnus affinis",
+    "reasoning": "In Indonesia, 'tongkol' commonly refers to several medium-sized tuna species, but it most frequently denotes the Mackerel Tuna (Euthynnus affinis), which is abundant and has significant economic importance in Indonesian fisheries. This is distinct from 'tuna' or 'cakalang' (skipjack tuna) in local nomenclature."
+  },
+  "agent_2_result": {
+    "agent": "anthropic/claude-3.7-sonnet",
+    "fish_common_name": "Mackerel Tuna",
+    "latin_name": "Euthynnus affinis",
+    "reasoning": "The Indonesian name 'tongkol' refers to Euthynnus affinis, commonly known as Mackerel Tuna or Kawakawa in English. This species is very common in Indonesian waters and is an important commercial fish across the Indonesian archipelago. It's a smaller tuna species that belongs to the family Scombridae and is extensively fished throughout Indonesia, playing a significant role in both local consumption and commercial fisheries."
+  },
+  "agent_3_result": {
+    "agent": "deepseek/deepseek-chat-v3-0324",
+    "fish_common_name": "Mackerel tuna",
+    "latin_name": "Euthynnus affinis",
+    "reasoning": "In Indonesian waters, 'tongkol' commonly refers to Euthynnus affinis, a species widely found and commercially important in the region."
+  }
+}

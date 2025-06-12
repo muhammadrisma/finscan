@@ -1,0 +1,145 @@
+import os
+import json
+import re
+from datetime import datetime
+from collections import Counter
+from dotenv import load_dotenv
+import requests
+
+from app.setting.setting import AGENT_EXTRACT_TEXT, AGENT1, AGENT2, AGENT3
+from app.util.load_prompt import load_prompt
+from app.schema.processing_log import AgentResult
+from app.schema.result_log import ResultLogResponse
+
+load_dotenv()
+
+# Load prompts
+agent_prompt = load_prompt('agent')
+api_key = os.getenv("OPENROUTER_API_KEY")
+api_base = os.getenv("OPENROUTER_API_BASE")
+
+class FishIdentificationService:
+    def __init__(self):
+        if not api_key or not api_base:
+            raise ValueError("Missing required environment variables for API key or base URL.")
+
+    def create_agent(self, prompt_template: str, input_text: dict, model: str):
+        """
+        Create an agent with the specified prompt template and model.
+        """
+        # Render the prompt with input_text
+        prompt = prompt_template
+        for k, v in input_text.items():
+            prompt = prompt.replace(f"{{{{ {k} }}}}", str(v))
+
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant"},
+                {"role": "user", "content": prompt}
+            ]
+        }
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        url = api_base.rstrip("/") + "/api/v1/chat/completions"
+
+        try:
+            response = requests.post(url, json=payload, headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise Exception(f"Error creating agent: {str(e)}")
+
+    def agent1(self, input_text: str):
+        """Create an agent using the model specified in AGENT1 setting."""
+        return self.create_agent(agent_prompt, {
+            "agent_name": AGENT1,
+            "fish_input": input_text
+        }, AGENT1)
+
+    def agent2(self, input_text: str):
+        """Create an agent using the model specified in AGENT2 setting."""
+        return self.create_agent(agent_prompt, {
+            "agent_name": AGENT2,
+            "fish_input": input_text
+        }, AGENT2)
+
+    def agent3(self, input_text: str):
+        """Create an agent using the model specified in AGENT3 setting."""
+        return self.create_agent(agent_prompt, {
+            "agent_name": AGENT3,
+            "fish_input": input_text
+        }, AGENT3)
+
+    def extract_agent_content(self, response: dict) -> AgentResult:
+        """Extract the essential content from an agent's response."""
+        try:
+            content = response['choices'][0]['message']['content']
+            # Remove markdown code block if present
+            content = content.replace('```json', '').replace('```', '').strip()
+            result = json.loads(content)
+            return AgentResult(
+                agent=result['agent'],
+                fish_common_name=result['fish_common_name'],
+                latin_name=result['latin_name'],
+                reasoning=result['reasoning']
+            )
+        except Exception as e:
+            raise Exception(f"Error extracting agent content: {str(e)}")
+
+    def normalize_latin_name(self, name: str) -> str:
+        """Normalize a latin name for comparison."""
+        if not name:
+            return ""
+        
+        # Convert to lowercase
+        name = name.lower()
+        
+        # Remove extra spaces
+        name = ' '.join(name.split())
+        
+        # Remove special characters except spaces and dots
+        name = re.sub(r'[^a-z\s.]', '', name)
+        
+        # Handle common variations
+        replacements = {
+            'spp': 'species',
+            'sp': 'species',
+            'subsp': 'subspecies',
+            'var': 'variety',
+            'cv': 'cultivar'
+        }
+        
+        for old, new in replacements.items():
+            name = name.replace(old, new)
+        
+        return name.strip()
+
+    def check_agent_agreement(self, agent_results: list[AgentResult]) -> tuple[bool, str, str, str]:
+        """Check if at least 2 agents agree on the latin name."""
+        # Normalize and count occurrences of each latin name
+        normalized_latin_names = [self.normalize_latin_name(result.latin_name) for result in agent_results]
+        latin_name_counts = Counter(normalized_latin_names)
+        
+        # Get the most common latin name
+        most_common_latin = latin_name_counts.most_common(1)[0]
+        
+        # Check if at least 2 agents agree
+        flag = most_common_latin[1] >= 2
+        
+        # Find the agent that provided the most common latin name
+        majority_latin = most_common_latin[0]
+        majority_agent = next(
+            (agent for agent in agent_results 
+             if self.normalize_latin_name(agent.latin_name) == majority_latin),
+            agent_results[0]  # Fallback to first agent if not found
+        )
+        
+        return (
+            flag,
+            majority_agent.fish_common_name,
+            majority_agent.latin_name,  # Use the original (non-normalized) latin name
+            majority_agent.fish_common_name  # Using common name as extracted name
+        ) 
