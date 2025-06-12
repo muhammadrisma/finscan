@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 import requests
 
@@ -8,6 +9,7 @@ from langchain.chains import LLMChain
 
 from app.setting.setting import AGENT_EXTRACT_TEXT, AGENT1, AGENT2, AGENT3
 from app.util.load_prompt import load_prompt
+from app.schema.processing_log import AgentResult
 
 load_dotenv()
 
@@ -16,6 +18,24 @@ agent_prompt = load_prompt('agent')
 extract_text_prompt = load_prompt('extract_text')
 api_key = os.getenv("OPENROUTER_API_KEY")
 api_base = os.getenv("OPENROUTER_API_BASE")
+
+def extract_agent_content(response: dict) -> AgentResult:
+    """
+    Extract the essential content from an agent's response.
+    """
+    try:
+        content = response['choices'][0]['message']['content']
+        # Remove markdown code block if present
+        content = content.replace('```json', '').replace('```', '').strip()
+        result = json.loads(content)
+        return AgentResult(
+            agent=result['agent'],
+            fish_common_name=result['fish_common_name'],
+            latin_name=result['latin_name'],
+            reasoning=result['reasoning']
+        )
+    except Exception as e:
+        raise Exception(f"Error extracting agent content: {str(e)}")
 
 def create_agent(prompt_template: str, input_text: dict, model: str):
     """
@@ -123,9 +143,14 @@ def process_log(id: str, original_description: str):
     """
     try:
         # Process through all three agents
-        agent1_result = agent1(original_description)
-        agent2_result = agent2(original_description)
-        agent3_result = agent3(original_description)
+        agent1_response = agent1(original_description)
+        agent2_response = agent2(original_description)
+        agent3_response = agent3(original_description)
+
+        # Extract content from each agent's response
+        agent1_result = extract_agent_content(agent1_response)
+        agent2_result = extract_agent_content(agent2_response)
+        agent3_result = extract_agent_content(agent3_response)
 
         # Create the processing log
         processing_log = {
