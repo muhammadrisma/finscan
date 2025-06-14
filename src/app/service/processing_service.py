@@ -1,7 +1,10 @@
+import json
+
 from app.core.fish_identification_service import FishIdentificationService
 from app.core.text_extraction_service import TextExtractionService
 from app.core.file_service import FileService
 from app.schema.result_log import ResultLogResponse
+from app.db.database import SessionLocal, ProcessingLog, ResultLog
 
 class ProcessingService:
     def __init__(self):
@@ -39,6 +42,21 @@ class ProcessingService:
             filepath = self.file_service.save_processing_log(processing_log, id)
             print(f"Results saved to: {filepath}")
 
+            # Save to database
+            db = SessionLocal()
+            try:
+                db_log = ProcessingLog(
+                    id=id,
+                    original_description=extracted_fish_name,
+                    agent_1_result=json.dumps(agent1_result.model_dump()),
+                    agent_2_result=json.dumps(agent2_result.model_dump()),
+                    agent_3_result=json.dumps(agent3_result.model_dump())
+                )
+                db.add(db_log)
+                db.commit()
+            finally:
+                db.close()
+
             return processing_log
         except Exception as e:
             raise Exception(f"Error in processing log: {str(e)}")
@@ -75,6 +93,22 @@ class ProcessingService:
             
             filepath = self.file_service.save_result_log(result_log, id)
             print(f"Result log saved to: {filepath}")
+
+            # Save to database
+            db = SessionLocal()
+            try:
+                db_result = ResultLog(
+                    id=id,
+                    original_description=original_description,
+                    extracted_fish_name=extracted_fish_name,
+                    fish_name_english=fish_name_english,
+                    fish_name_latin=fish_name_latin,
+                    flag=flag
+                )
+                db.add(db_result)
+                db.commit()
+            finally:
+                db.close()
             
             return result_log
         except Exception as e:
