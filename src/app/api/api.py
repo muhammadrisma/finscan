@@ -84,3 +84,34 @@ async def get_result_log(log_id: str, db: Session = Depends(get_db)):
         return log
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 
+
+
+@router.delete("/processing/log/{log_id}")
+async def delete_processing_log(log_id: str, db: Session = Depends(get_db)):
+    """
+    Delete a specific processing log by ID.
+    """
+    try:
+        log = db.query(ProcessingLog).filter(ProcessingLog.id == log_id).first()
+        if not log:
+            raise HTTPException(status_code=404, detail="Processing log not found")
+        db.delete(log)
+        db.commit()
+        return {"message": "Processing log deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/result/log/{log_id}")
+async def delete_result_log(log_id: str, db: Session = Depends(get_db)):
+    """
+    Delete a specific result log by ID.
+    """
+    try:
+        log = db.query(ResultLog).filter(ResultLog.id == log_id).first()
+        if not log:
+            raise HTTPException(status_code=404, detail="Result log not found")
+        db.delete(log)
+        db.commit()
+        return {"message": "Result log deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
