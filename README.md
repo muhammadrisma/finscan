@@ -47,6 +47,29 @@ OPENAI_API_KEY=your_api_key_here
 DATABASE_URL=your_postgresql_connection_string
 ```
 
+6. Set up docker compose poastgre
+```bash
+    docker-compose up -d
+```
+7. Database Initialization
+```bash
+# Start the PostgreSQL database
+docker-compose up -d
+
+# Wait a few seconds for the database to be ready
+sleep 5
+
+# Initialize the database tables
+python -m src.app.db.init_db
+```
+
+The database will be accessible at:
+- Host: localhost
+- Port: 5432
+- Database: fishdb
+- Username: postgres
+- Password: postgres
+
 ## Usage
 
 1. Start the development server:
@@ -60,3 +83,4 @@ make run
 
 - Source code is located in the `src/` directory
 - Use `make` commands for common development tasks
+

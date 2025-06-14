@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 class ProcessingLogRequest(BaseModel):
     id: str
@@ -17,3 +17,10 @@ class ProcessingLogResponse(BaseModel):
     agent_1_result: AgentResult
     agent_2_result: AgentResult
     agent_3_result: AgentResult
+
+class ProcessingLogDBResponse(BaseModel):
+    id: str
+    original_description: str
+    agent_1_result: str  # JSON string
+    agent_2_result: str  # JSON string
+    agent_3_result: str  # JSON string

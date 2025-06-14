@@ -1,6 +1,6 @@
-from database import init_db
+from app.db.database import init_db
 
 if __name__ == "__main__":
-    print("Creating database tables...")
+    print("Initializing database...")
     init_db()
-    print("Database tables created successfully!") 
+    print("Database initialization completed!") 

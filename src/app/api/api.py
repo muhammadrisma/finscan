@@ -1,7 +1,11 @@
-from fastapi import APIRouter, HTTPException
-from app.schema.processing_log import ProcessingLogRequest, ProcessingLogResponse
-from app.schema.result_log import ResultLogRequest, ResultLogResponse
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from typing import List
+
+from app.schema.processing_log import ProcessingLogRequest, ProcessingLogResponse, ProcessingLogDBResponse
+from app.schema.result_log import ResultLogRequest, ResultLogResponse, ResultLogDBResponse
 from app.service.processing_service import ProcessingService
+from app.db.database import get_db, ProcessingLog, ResultLog
 
 router = APIRouter(
     prefix="/api",
@@ -22,6 +26,30 @@ async def create_processing_log(request: ProcessingLogRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/processing/logs", response_model=List[ProcessingLogDBResponse])
+async def get_processing_logs(db: Session = Depends(get_db)):
+    """
+    Get all processing logs from the database.
+    """
+    try:
+        logs = db.query(ProcessingLog).all()
+        return logs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/processing/log/{log_id}", response_model=ProcessingLogDBResponse)
+async def get_processing_log(log_id: str, db: Session = Depends(get_db)):
+    """
+    Get a specific processing log by ID.
+    """
+    try:
+        log = db.query(ProcessingLog).filter(ProcessingLog.id == log_id).first()
+        if not log:
+            raise HTTPException(status_code=404, detail="Processing log not found")
+        return log
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/result/log", response_model=ResultLogResponse)
 async def create_result_log(request: ResultLogRequest):
     """
@@ -30,5 +58,29 @@ async def create_result_log(request: ResultLogRequest):
     try:
         result = processing_service.process_result_log(request.id, request.original_description)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/result/logs", response_model=List[ResultLogDBResponse])
+async def get_result_logs(db: Session = Depends(get_db)):
+    """
+    Get all result logs from the database.
+    """
+    try:
+        logs = db.query(ResultLog).all()
+        return logs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/result/log/{log_id}", response_model=ResultLogDBResponse)
+async def get_result_log(log_id: str, db: Session = Depends(get_db)):
+    """
+    Get a specific result log by ID.
+    """
+    try:
+        log = db.query(ResultLog).filter(ResultLog.id == log_id).first()
+        if not log:
+            raise HTTPException(status_code=404, detail="Result log not found")
+        return log
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 
