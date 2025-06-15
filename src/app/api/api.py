@@ -7,7 +7,7 @@ from app.schema.result_log import ResultLogRequest, ResultLogResponse, ResultLog
 from app.schema.audit_log import AuditLogResponse
 from app.service.processing_service import ProcessingService
 from app.service.audit_service import AuditService
-from app.db.database import get_db, ProcessingLog, ResultLog
+from app.db.database import get_db, ProcessingLog, ResultLog, CacheLog
 
 router = APIRouter(
     prefix="/api",
@@ -131,5 +131,23 @@ async def get_latest_audit_log(db: Session = Depends(get_db)):
             "total_result_logs": audit_log.total_result_logs,
             "total_cache_logs": audit_log.total_cache_logs
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/cache/logs", response_model=List[dict])
+async def get_cache_logs(db: Session = Depends(get_db)):
+    """
+    Get all cache logs from the database.
+    """
+    try:
+        logs = db.query(CacheLog).all()
+        return [
+            {
+                "extracted_fish_name": log.extracted_fish_name,
+                "fish_name_english": log.fish_name_english,
+                "fish_name_latin": log.fish_name_latin
+            }
+            for log in logs
+        ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

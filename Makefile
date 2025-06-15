@@ -14,3 +14,6 @@ reset-db:
 
 run:
 	uvicorn app.app:app --reload --host 0.0.0.0 --port 8000
+
+streamlit:
+	streamlit run src/app/demo/demo.py
