@@ -5,12 +5,14 @@ from app.core.text_extraction_service import TextExtractionService
 from app.core.file_service import FileService
 from app.schema.result_log import ResultLogResponse
 from app.db.database import SessionLocal, ProcessingLog, ResultLog
+from app.service.cache_service import CacheService
 
 class ProcessingService:
     def __init__(self):
         self.fish_service = FishIdentificationService()
         self.text_service = TextExtractionService()
         self.file_service = FileService()
+        self.cache_service = CacheService()
 
     def process_log(self, id: str, extracted_fish_name: str):
         """
@@ -22,6 +24,22 @@ class ProcessingService:
             A dictionary containing the processing log with all agent results
         """
         try:
+            # Check cache first
+            db = SessionLocal()
+            try:
+                found_in_cache, cached_latin_name = self.cache_service.get_cached_result(db, extracted_fish_name)
+                if found_in_cache:
+                    # Return a simplified response with the cached result
+                    return {
+                        "id": id,
+                        "original_description": extracted_fish_name,
+                        "cached_result": True,
+                        "fish_name_latin": cached_latin_name
+                    }
+            finally:
+                db.close()
+
+            # If not in cache, proceed with normal processing
             agent1_response = self.fish_service.agent1(extracted_fish_name)
             agent2_response = self.fish_service.agent2(extracted_fish_name)
             agent3_response = self.fish_service.agent3(extracted_fish_name)
@@ -61,55 +79,102 @@ class ProcessingService:
         except Exception as e:
             raise Exception(f"Error in processing log: {str(e)}")
 
-    def process_result_log(self, id: str, original_description: str) -> ResultLogResponse:
+    def process_result_log(self, id: str, original_description: str):
         """
-        Process the input and create a result log with agent agreement check.
+        Process the result log and check agent agreement.
         Args:
             id: The unique identifier for the log entry
             original_description: The original product description
         Returns:
-            ResultLogResponse containing the processed results
+            A ResultLogResponse object
         """
         try:
+            # Extract fish name from description
             extracted_fish_name = self.text_service.extract_text(original_description)
-            processing_log = self.process_log(id, extracted_fish_name)
             
-            agent_results = [
-                processing_log["agent_1_result"],
-                processing_log["agent_2_result"],
-                processing_log["agent_3_result"]
-            ]
+            # Check cache first
+            db = SessionLocal()
+            try:
+                found_in_cache, cached_names = self.cache_service.get_cached_result(db, extracted_fish_name)
+                if found_in_cache:
+                    fish_name_english, fish_name_latin = cached_names
+                    # Create result log from cache without processing
+                    result_log = ResultLogResponse(
+                        id=id,
+                        original_description=original_description,
+                        extracted_fish_name=extracted_fish_name,
+                        fish_name_english=fish_name_english,
+                        fish_name_latin=fish_name_latin,
+                        flag=True,  # Cached results are always considered valid
+                        from_cache=True
+                    )
+                    
+                    # Save to result_log only (skip processing_log)
+                    db_log = ResultLog(
+                        id=id,
+                        original_description=original_description,
+                        extracted_fish_name=extracted_fish_name,
+                        fish_name_english=fish_name_english,
+                        fish_name_latin=fish_name_latin,
+                        flag=True,
+                        from_cache=True
+                    )
+                    db.add(db_log)
+                    db.commit()
+                    
+                    # Save results to file
+                    filepath = self.file_service.save_result_log(result_log, id)
+                    print(f"Cached results saved to: {filepath}")
+                    
+                    return result_log
+            finally:
+                db.close()
+
+            # If not in cache, proceed with normal processing
+            processing_result = self.process_log(id, extracted_fish_name)
             
-            flag, fish_name_english, fish_name_latin, _ = self.fish_service.check_agent_agreement(agent_results)
-            
+            # Check agent agreement
+            flag, fish_name_english, fish_name_latin, _ = self.fish_service.check_agent_agreement([
+                processing_result["agent_1_result"],
+                processing_result["agent_2_result"],
+                processing_result["agent_3_result"]
+            ])
+
             result_log = ResultLogResponse(
                 id=id,
                 original_description=original_description,
                 extracted_fish_name=extracted_fish_name,
                 fish_name_english=fish_name_english,
                 fish_name_latin=fish_name_latin,
-                flag=flag
+                flag=flag,
+                from_cache=False
             )
-            
-            filepath = self.file_service.save_result_log(result_log, id)
-            print(f"Result log saved to: {filepath}")
 
             # Save to database
             db = SessionLocal()
             try:
-                db_result = ResultLog(
+                db_log = ResultLog(
                     id=id,
                     original_description=original_description,
                     extracted_fish_name=extracted_fish_name,
                     fish_name_english=fish_name_english,
                     fish_name_latin=fish_name_latin,
-                    flag=flag
+                    flag=flag,
+                    from_cache=False
                 )
-                db.add(db_result)
+                db.add(db_log)
                 db.commit()
+                
+                # Add to cache if flag is True
+                if flag:
+                    self.cache_service.add_to_cache(db, db_log)
             finally:
                 db.close()
-            
+
+            # Save results to file
+            filepath = self.file_service.save_result_log(result_log, id)
+            print(f"Results saved to: {filepath}")
+
             return result_log
         except Exception as e:
             raise Exception(f"Error in processing result log: {str(e)}") 

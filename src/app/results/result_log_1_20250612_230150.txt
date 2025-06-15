@@ -1,8 +1,0 @@
-{
-  "id": "1",
-  "original_description": "iwak tongkol 10 kg",
-  "extracted_fish_name": "tongkol",
-  "fish_name_english": "Mackerel Tuna",
-  "fish_name_latin": "Euthynnus affinis",
-  "flag": true
-}

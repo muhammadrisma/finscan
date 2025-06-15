@@ -11,6 +11,7 @@ class ResultLogResponse(BaseModel):
     fish_name_english: str
     fish_name_latin: str
     flag: bool
+    from_cache: bool = False
 
 class ResultLogDBResponse(BaseModel):
     id: str
@@ -18,4 +19,5 @@ class ResultLogDBResponse(BaseModel):
     extracted_fish_name: str
     fish_name_english: str
     fish_name_latin: str
-    flag: bool 
+    flag: bool
+    from_cache: bool = False 

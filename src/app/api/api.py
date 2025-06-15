@@ -83,8 +83,7 @@ async def get_result_log(log_id: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Result log not found")
         return log
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/processing/log/{log_id}")
 async def delete_processing_log(log_id: str, db: Session = Depends(get_db)):

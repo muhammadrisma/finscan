@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-from sqlalchemy import create_engine, Column, String, Boolean
+from sqlalchemy import create_engine, Column, String, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -31,6 +31,15 @@ class ResultLog(Base):
     fish_name_english = Column(String)
     fish_name_latin = Column(String)
     flag = Column(Boolean)
+    from_cache = Column(Boolean, default=False)
+
+class CacheLog(Base):
+    __tablename__ = "cache_log"
+    id = Column(String, primary_key=True)
+    extracted_fish_name = Column(String, unique=True, index=True)
+    fish_name_english = Column(String)
+    fish_name_latin = Column(String)
+    result_log_id = Column(String, ForeignKey("result_log.id"))
 
 def init_db():
     Base.metadata.create_all(bind=engine)
