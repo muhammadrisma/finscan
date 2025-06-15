@@ -1,11 +1,10 @@
 from pydantic import BaseModel
 
 class ResultLogRequest(BaseModel):
-    id: str
     original_description: str
 
 class ResultLogResponse(BaseModel):
-    id: str
+    id: int
     original_description: str
     extracted_fish_name: str
     fish_name_english: str
@@ -14,7 +13,7 @@ class ResultLogResponse(BaseModel):
     from_cache: bool = False
 
 class ResultLogDBResponse(BaseModel):
-    id: str
+    id: int
     original_description: str
     extracted_fish_name: str
     fish_name_english: str

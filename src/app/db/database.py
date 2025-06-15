@@ -3,7 +3,7 @@ import pytz
 
 from datetime import datetime
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, String, Boolean, ForeignKey, Integer, DateTime
+from sqlalchemy import create_engine, Column, String, Boolean, ForeignKey, Integer, DateTime, Sequence
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -22,7 +22,7 @@ def get_jakarta_time():
 class ProcessingLog(Base):
     __tablename__ = "processing_log"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, Sequence('processing_log_id_seq'), primary_key=True)
     original_description = Column(String)
     agent_1_result = Column(String) # json result
     agent_2_result = Column(String) # json result
@@ -31,7 +31,7 @@ class ProcessingLog(Base):
 class ResultLog(Base):
     __tablename__ = "result_log"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, Sequence('result_log_id_seq'), primary_key=True)
     original_description = Column(String)
     extracted_fish_name = Column(String)
     fish_name_english = Column(String)
@@ -41,11 +41,11 @@ class ResultLog(Base):
 
 class CacheLog(Base):
     __tablename__ = "cache_log"
-    id = Column(String, primary_key=True)
+    id = Column(Integer, Sequence('cache_log_id_seq'), primary_key=True)
     extracted_fish_name = Column(String, unique=True, index=True)
     fish_name_english = Column(String)
     fish_name_latin = Column(String)
-    result_log_id = Column(String, ForeignKey("result_log.id"))
+    result_log_id = Column(Integer, ForeignKey("result_log.id"))
 
 class AuditLog(Base):
     __tablename__ = "audit_log"

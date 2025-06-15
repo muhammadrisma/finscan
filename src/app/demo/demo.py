@@ -20,7 +20,6 @@ def get_cache_logs():
 def process_result_log(description: str):
     """Process a result log with the given description"""
     data = {
-        "id": str(datetime.now().timestamp()),
         "original_description": description
     }
     response = requests.post(f"{BASE_URL}/result/log", json=data)
@@ -84,8 +83,9 @@ with col2:
     if cache_logs:
         df = pd.DataFrame(cache_logs)
         st.dataframe(
-            df[["extracted_fish_name", "fish_name_english", "fish_name_latin"]],
+            df[["id", "extracted_fish_name", "fish_name_english", "fish_name_latin"]],
             column_config={
+                "id": "ID",
                 "extracted_fish_name": "Extracted Name",
                 "fish_name_english": "English Name",
                 "fish_name_latin": "Latin Name"

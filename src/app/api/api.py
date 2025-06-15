@@ -19,12 +19,12 @@ processing_service = ProcessingService()
 audit_service = AuditService()
 
 @router.post("/processing/log", response_model=ProcessingLogResponse)
-async def create_processing_log(request: ProcessingLogRequest):
+async def create_processing_log(request: ProcessingLogRequest, db: Session = Depends(get_db)):
     """
     Create a new processing log by running the input through all agents.
     """
     try:
-        result = processing_service.process_log(request.id, request.original_description)
+        result = processing_service.process_log(request.original_description)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -41,7 +41,7 @@ async def get_processing_logs(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/processing/log/{log_id}", response_model=ProcessingLogDBResponse)
-async def get_processing_log(log_id: str, db: Session = Depends(get_db)):
+async def get_processing_log(log_id: int, db: Session = Depends(get_db)):
     """
     Get a specific processing log by ID.
     """
@@ -54,12 +54,12 @@ async def get_processing_log(log_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/result/log", response_model=ResultLogResponse)
-async def create_result_log(request: ResultLogRequest):
+async def create_result_log(request: ResultLogRequest, db: Session = Depends(get_db)):
     """
     Create a new result log with agent agreement check.
     """
     try:
-        result = processing_service.process_result_log(request.id, request.original_description)
+        result = processing_service.process_result_log(request.original_description)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -76,7 +76,7 @@ async def get_result_logs(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/result/log/{log_id}", response_model=ResultLogDBResponse)
-async def get_result_log(log_id: str, db: Session = Depends(get_db)):
+async def get_result_log(log_id: int, db: Session = Depends(get_db)):
     """
     Get a specific result log by ID.
     """
@@ -89,7 +89,7 @@ async def get_result_log(log_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/processing/log/{log_id}")
-async def delete_processing_log(log_id: str, db: Session = Depends(get_db)):
+async def delete_processing_log(log_id: int, db: Session = Depends(get_db)):
     """
     Delete a specific processing log by ID.
     """
@@ -104,7 +104,7 @@ async def delete_processing_log(log_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/result/log/{log_id}")
-async def delete_result_log(log_id: str, db: Session = Depends(get_db)):
+async def delete_result_log(log_id: int, db: Session = Depends(get_db)):
     """
     Delete a specific result log by ID.
     """
@@ -143,6 +143,7 @@ async def get_cache_logs(db: Session = Depends(get_db)):
         logs = db.query(CacheLog).all()
         return [
             {
+                "id": log.id,
                 "extracted_fish_name": log.extracted_fish_name,
                 "fish_name_english": log.fish_name_english,
                 "fish_name_latin": log.fish_name_latin

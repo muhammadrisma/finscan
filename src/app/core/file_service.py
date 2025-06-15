@@ -24,7 +24,7 @@ class FileService:
             filepath = os.path.join(self.results_dir, filename)
 
             serializable_data = {
-                "id": data["id"],
+                "id": int(id),  # Convert string ID back to integer
                 "original_description": data["original_description"],
                 "agent_1_result": self.convert_to_dict(data["agent_1_result"]),
                 "agent_2_result": self.convert_to_dict(data["agent_2_result"]),
@@ -46,7 +46,11 @@ class FileService:
             filename = f"result_log_{id}_{timestamp}.txt"
             filepath = os.path.join(self.results_dir, filename)
 
-            formatted_data = json.dumps(data.model_dump(), indent=2)
+            # Convert the data to a dictionary and ensure ID is integer
+            data_dict = data.model_dump()
+            data_dict["id"] = int(id)  # Convert string ID back to integer
+
+            formatted_data = json.dumps(data_dict, indent=2)
 
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(formatted_data)

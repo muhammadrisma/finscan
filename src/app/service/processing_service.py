@@ -16,11 +16,10 @@ class ProcessingService:
         self.cache_service = CacheService()
         self.audit_service = AuditService()
 
-    def process_log(self, id: str, extracted_fish_name: str):
+    def process_log(self, extracted_fish_name: str):
         """
         Process the input through all three agents and return a structured log.
         Args:
-            id: The unique identifier for the log entry
             extracted_fish_name: The extracted fish name to process
         Returns:
             A dictionary containing the processing log with all agent results
@@ -31,9 +30,22 @@ class ProcessingService:
             try:
                 found_in_cache, cached_latin_name = self.cache_service.get_cached_result(db, extracted_fish_name)
                 if found_in_cache:
-                    # Return a simplified response with the cached result
+                    # Create a new processing log entry
+                    db_log = ProcessingLog(
+                        original_description=extracted_fish_name,
+                        agent_1_result=json.dumps({"cached": True, "latin_name": cached_latin_name}),
+                        agent_2_result=json.dumps({"cached": True, "latin_name": cached_latin_name}),
+                        agent_3_result=json.dumps({"cached": True, "latin_name": cached_latin_name})
+                    )
+                    db.add(db_log)
+                    db.commit()
+                    db.refresh(db_log)
+                    
+                    # Update audit log
+                    self.audit_service.get_latest_audit_log(db)
+                    
                     return {
-                        "id": id,
+                        "id": db_log.id,
                         "original_description": extracted_fish_name,
                         "cached_result": True,
                         "fish_name_latin": cached_latin_name
@@ -50,23 +62,10 @@ class ProcessingService:
             agent2_result = self.fish_service.extract_agent_content(agent2_response)
             agent3_result = self.fish_service.extract_agent_content(agent3_response)
 
-            processing_log = {
-                "id": id,
-                "original_description": extracted_fish_name,
-                "agent_1_result": agent1_result,
-                "agent_2_result": agent2_result,
-                "agent_3_result": agent3_result
-            }
-
-            # Save results to file
-            filepath = self.file_service.save_processing_log(processing_log, id)
-            print(f"Results saved to: {filepath}")
-
-            # Save to database
+            # Save to database first to get the ID
             db = SessionLocal()
             try:
                 db_log = ProcessingLog(
-                    id=id,
                     original_description=extracted_fish_name,
                     agent_1_result=json.dumps(agent1_result.model_dump()),
                     agent_2_result=json.dumps(agent2_result.model_dump()),
@@ -74,21 +73,33 @@ class ProcessingService:
                 )
                 db.add(db_log)
                 db.commit()
+                db.refresh(db_log)
                 
                 # Update audit log
                 self.audit_service.get_latest_audit_log(db)
+                
+                processing_log = {
+                    "id": db_log.id,
+                    "original_description": extracted_fish_name,
+                    "agent_1_result": agent1_result,
+                    "agent_2_result": agent2_result,
+                    "agent_3_result": agent3_result
+                }
+
+                # Save results to file
+                filepath = self.file_service.save_processing_log(processing_log, str(db_log.id))
+                print(f"Results saved to: {filepath}")
+
+                return processing_log
             finally:
                 db.close()
-
-            return processing_log
         except Exception as e:
             raise Exception(f"Error in processing log: {str(e)}")
 
-    def process_result_log(self, id: str, original_description: str):
+    def process_result_log(self, original_description: str):
         """
         Process the result log and check agent agreement.
         Args:
-            id: The unique identifier for the log entry
             original_description: The original product description
         Returns:
             A ResultLogResponse object
@@ -103,9 +114,9 @@ class ProcessingService:
                 found_in_cache, cached_names = self.cache_service.get_cached_result(db, extracted_fish_name)
                 if found_in_cache:
                     fish_name_english, fish_name_latin = cached_names
+                    
                     # Create result log from cache without processing
-                    result_log = ResultLogResponse(
-                        id=id,
+                    db_log = ResultLog(
                         original_description=original_description,
                         extracted_fish_name=extracted_fish_name,
                         fish_name_english=fish_name_english,
@@ -113,10 +124,15 @@ class ProcessingService:
                         flag=True,  # Cached results are always considered valid
                         from_cache=True
                     )
+                    db.add(db_log)
+                    db.commit()
+                    db.refresh(db_log)
                     
-                    # Save to result_log only (skip processing_log)
-                    db_log = ResultLog(
-                        id=id,
+                    # Update audit log
+                    self.audit_service.get_latest_audit_log(db)
+                    
+                    result_log = ResultLogResponse(
+                        id=db_log.id,
                         original_description=original_description,
                         extracted_fish_name=extracted_fish_name,
                         fish_name_english=fish_name_english,
@@ -124,14 +140,9 @@ class ProcessingService:
                         flag=True,
                         from_cache=True
                     )
-                    db.add(db_log)
-                    db.commit()
-                    
-                    # Update audit log
-                    self.audit_service.get_latest_audit_log(db)
                     
                     # Save results to file
-                    filepath = self.file_service.save_result_log(result_log, id)
+                    filepath = self.file_service.save_result_log(result_log, str(db_log.id))
                     print(f"Cached results saved to: {filepath}")
                     
                     return result_log
@@ -139,7 +150,7 @@ class ProcessingService:
                 db.close()
 
             # If not in cache, proceed with normal processing
-            processing_result = self.process_log(id, extracted_fish_name)
+            processing_result = self.process_log(extracted_fish_name)
             
             # Check agent agreement
             flag, fish_name_english, fish_name_latin, _ = self.fish_service.check_agent_agreement([
@@ -148,21 +159,10 @@ class ProcessingService:
                 processing_result["agent_3_result"]
             ])
 
-            result_log = ResultLogResponse(
-                id=id,
-                original_description=original_description,
-                extracted_fish_name=extracted_fish_name,
-                fish_name_english=fish_name_english,
-                fish_name_latin=fish_name_latin,
-                flag=flag,
-                from_cache=False
-            )
-
             # Save to database
             db = SessionLocal()
             try:
                 db_log = ResultLog(
-                    id=id,
                     original_description=original_description,
                     extracted_fish_name=extracted_fish_name,
                     fish_name_english=fish_name_english,
@@ -172,6 +172,7 @@ class ProcessingService:
                 )
                 db.add(db_log)
                 db.commit()
+                db.refresh(db_log)
                 
                 # Add to cache if flag is True
                 if flag:
@@ -179,13 +180,23 @@ class ProcessingService:
                 
                 # Update audit log
                 self.audit_service.get_latest_audit_log(db)
+                
+                result_log = ResultLogResponse(
+                    id=db_log.id,
+                    original_description=original_description,
+                    extracted_fish_name=extracted_fish_name,
+                    fish_name_english=fish_name_english,
+                    fish_name_latin=fish_name_latin,
+                    flag=flag,
+                    from_cache=False
+                )
+
+                # Save results to file
+                filepath = self.file_service.save_result_log(result_log, str(db_log.id))
+                print(f"Results saved to: {filepath}")
+
+                return result_log
             finally:
                 db.close()
-
-            # Save results to file
-            filepath = self.file_service.save_result_log(result_log, id)
-            print(f"Results saved to: {filepath}")
-
-            return result_log
         except Exception as e:
             raise Exception(f"Error in processing result log: {str(e)}") 
