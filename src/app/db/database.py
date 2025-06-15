@@ -1,7 +1,9 @@
 import os
-from dotenv import load_dotenv
+import pytz
 
-from sqlalchemy import create_engine, Column, String, Boolean, ForeignKey
+from datetime import datetime
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, Column, String, Boolean, ForeignKey, Integer, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -12,6 +14,10 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+def get_jakarta_time():
+    jakarta_tz = pytz.timezone('Asia/Jakarta')
+    return datetime.now(jakarta_tz)
 
 class ProcessingLog(Base):
     __tablename__ = "processing_log"
@@ -40,6 +46,13 @@ class CacheLog(Base):
     fish_name_english = Column(String)
     fish_name_latin = Column(String)
     result_log_id = Column(String, ForeignKey("result_log.id"))
+
+class AuditLog(Base):
+    __tablename__ = "audit_log"
+    id = Column(DateTime, primary_key=True, default=get_jakarta_time)
+    total_processing_logs = Column(Integer, default=0)
+    total_result_logs = Column(Integer, default=0)
+    total_cache_logs = Column(Integer, default=0)
 
 def init_db():
     Base.metadata.create_all(bind=engine)

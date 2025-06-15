@@ -6,6 +6,7 @@ from app.core.file_service import FileService
 from app.schema.result_log import ResultLogResponse
 from app.db.database import SessionLocal, ProcessingLog, ResultLog
 from app.service.cache_service import CacheService
+from app.service.audit_service import AuditService
 
 class ProcessingService:
     def __init__(self):
@@ -13,6 +14,7 @@ class ProcessingService:
         self.text_service = TextExtractionService()
         self.file_service = FileService()
         self.cache_service = CacheService()
+        self.audit_service = AuditService()
 
     def process_log(self, id: str, extracted_fish_name: str):
         """
@@ -72,6 +74,9 @@ class ProcessingService:
                 )
                 db.add(db_log)
                 db.commit()
+                
+                # Update audit log
+                self.audit_service.get_latest_audit_log(db)
             finally:
                 db.close()
 
@@ -122,6 +127,9 @@ class ProcessingService:
                     db.add(db_log)
                     db.commit()
                     
+                    # Update audit log
+                    self.audit_service.get_latest_audit_log(db)
+                    
                     # Save results to file
                     filepath = self.file_service.save_result_log(result_log, id)
                     print(f"Cached results saved to: {filepath}")
@@ -168,6 +176,9 @@ class ProcessingService:
                 # Add to cache if flag is True
                 if flag:
                     self.cache_service.add_to_cache(db, db_log)
+                
+                # Update audit log
+                self.audit_service.get_latest_audit_log(db)
             finally:
                 db.close()
 

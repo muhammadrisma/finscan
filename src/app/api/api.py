@@ -4,7 +4,9 @@ from typing import List
 
 from app.schema.processing_log import ProcessingLogRequest, ProcessingLogResponse, ProcessingLogDBResponse
 from app.schema.result_log import ResultLogRequest, ResultLogResponse, ResultLogDBResponse
+from app.schema.audit_log import AuditLogResponse
 from app.service.processing_service import ProcessingService
+from app.service.audit_service import AuditService
 from app.db.database import get_db, ProcessingLog, ResultLog
 
 router = APIRouter(
@@ -14,6 +16,7 @@ router = APIRouter(
 )
 
 processing_service = ProcessingService()
+audit_service = AuditService()
 
 @router.post("/processing/log", response_model=ProcessingLogResponse)
 async def create_processing_log(request: ProcessingLogRequest):
@@ -112,5 +115,21 @@ async def delete_result_log(log_id: str, db: Session = Depends(get_db)):
         db.delete(log)
         db.commit()
         return {"message": "Result log deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/audit/latest", response_model=AuditLogResponse)
+async def get_latest_audit_log(db: Session = Depends(get_db)):
+    """
+    Get the latest audit log entry with current counts.
+    """
+    try:
+        audit_log = audit_service.get_latest_audit_log(db)
+        return {
+            "id": audit_log.id,
+            "total_processing_logs": audit_log.total_processing_logs,
+            "total_result_logs": audit_log.total_result_logs,
+            "total_cache_logs": audit_log.total_cache_logs
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
