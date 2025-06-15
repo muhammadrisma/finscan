@@ -6,7 +6,6 @@ from app.util.api_utils import create_llm_request, make_llm_request
 
 load_dotenv()
 
-# Load prompts
 extract_text_prompt = load_prompt('extract_text')
 api_key = os.getenv("OPENROUTER_API_KEY")
 api_base = os.getenv("OPENROUTER_API_BASE")

@@ -25,12 +25,10 @@ class ProcessingService:
             A dictionary containing the processing log with all agent results
         """
         try:
-            # Check cache first
             db = SessionLocal()
             try:
                 found_in_cache, cached_latin_name = self.cache_service.get_cached_result(db, extracted_fish_name)
                 if found_in_cache:
-                    # Create a new processing log entry
                     db_log = ProcessingLog(
                         original_description=extracted_fish_name,
                         agent_1_result=json.dumps({"cached": True, "latin_name": cached_latin_name}),
@@ -41,7 +39,6 @@ class ProcessingService:
                     db.commit()
                     db.refresh(db_log)
                     
-                    # Update audit log
                     self.audit_service.get_latest_audit_log(db)
                     
                     return {
@@ -53,7 +50,6 @@ class ProcessingService:
             finally:
                 db.close()
 
-            # If not in cache, proceed with normal processing
             agent1_response = self.fish_service.agent1(extracted_fish_name)
             agent2_response = self.fish_service.agent2(extracted_fish_name)
             agent3_response = self.fish_service.agent3(extracted_fish_name)
@@ -62,7 +58,6 @@ class ProcessingService:
             agent2_result = self.fish_service.extract_agent_content(agent2_response)
             agent3_result = self.fish_service.extract_agent_content(agent3_response)
 
-            # Save to database first to get the ID
             db = SessionLocal()
             try:
                 db_log = ProcessingLog(
@@ -75,7 +70,6 @@ class ProcessingService:
                 db.commit()
                 db.refresh(db_log)
                 
-                # Update audit log
                 self.audit_service.get_latest_audit_log(db)
                 
                 processing_log = {
@@ -85,8 +79,7 @@ class ProcessingService:
                     "agent_2_result": agent2_result,
                     "agent_3_result": agent3_result
                 }
-
-                # Save results to file
+    
                 filepath = self.file_service.save_processing_log(processing_log, str(db_log.id))
                 print(f"Results saved to: {filepath}")
 
@@ -105,30 +98,26 @@ class ProcessingService:
             A ResultLogResponse object
         """
         try:
-            # Extract fish name from description
             extracted_fish_name = self.text_service.extract_text(original_description)
             
-            # Check cache first
             db = SessionLocal()
             try:
                 found_in_cache, cached_names = self.cache_service.get_cached_result(db, extracted_fish_name)
                 if found_in_cache:
                     fish_name_english, fish_name_latin = cached_names
                     
-                    # Create result log from cache without processing
                     db_log = ResultLog(
                         original_description=original_description,
                         extracted_fish_name=extracted_fish_name,
                         fish_name_english=fish_name_english,
                         fish_name_latin=fish_name_latin,
-                        flag=True,  # Cached results are always considered valid
+                        flag=True,
                         from_cache=True
                     )
                     db.add(db_log)
                     db.commit()
                     db.refresh(db_log)
                     
-                    # Update audit log
                     self.audit_service.get_latest_audit_log(db)
                     
                     result_log = ResultLogResponse(
@@ -141,7 +130,6 @@ class ProcessingService:
                         from_cache=True
                     )
                     
-                    # Save results to file
                     filepath = self.file_service.save_result_log(result_log, str(db_log.id))
                     print(f"Cached results saved to: {filepath}")
                     
@@ -149,17 +137,14 @@ class ProcessingService:
             finally:
                 db.close()
 
-            # If not in cache, proceed with normal processing
             processing_result = self.process_log(extracted_fish_name)
             
-            # Check agent agreement
             flag, fish_name_english, fish_name_latin, _ = self.fish_service.check_agent_agreement([
                 processing_result["agent_1_result"],
                 processing_result["agent_2_result"],
                 processing_result["agent_3_result"]
             ])
 
-            # Save to database
             db = SessionLocal()
             try:
                 db_log = ResultLog(
@@ -174,11 +159,9 @@ class ProcessingService:
                 db.commit()
                 db.refresh(db_log)
                 
-                # Add to cache if flag is True
                 if flag:
                     self.cache_service.add_to_cache(db, db_log)
                 
-                # Update audit log
                 self.audit_service.get_latest_audit_log(db)
                 
                 result_log = ResultLogResponse(
@@ -191,7 +174,6 @@ class ProcessingService:
                     from_cache=False
                 )
 
-                # Save results to file
                 filepath = self.file_service.save_result_log(result_log, str(db_log.id))
                 print(f"Results saved to: {filepath}")
 

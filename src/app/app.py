@@ -8,7 +8,6 @@ from fastapi.responses import JSONResponse
 from app.api.api import router as api_router
 from app.setting.setting import AGENT1, AGENT2, AGENT3, AGENT_EXTRACT_TEXT
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -20,10 +19,9 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Update with your frontend URL
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],

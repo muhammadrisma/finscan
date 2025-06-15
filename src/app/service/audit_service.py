@@ -9,12 +9,10 @@ class AuditService:
         """
         Get the latest audit log entry with current counts.
         """
-        # Get counts from all tables
         total_processing_logs = db.query(ProcessingLog).count()
         total_result_logs = db.query(ResultLog).count()
         total_cache_logs = db.query(CacheLog).count()
 
-        # Create new audit log entry
         audit_log = AuditLog(
             total_processing_logs=total_processing_logs,
             total_result_logs=total_result_logs,

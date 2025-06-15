@@ -13,7 +13,6 @@ from app.schema.result_log import ResultLogResponse
 
 load_dotenv()
 
-# Load prompts
 agent_prompt = load_prompt('agent')
 api_key = os.getenv("OPENROUTER_API_KEY")
 api_base = os.getenv("OPENROUTER_API_BASE")
@@ -27,7 +26,6 @@ class FishIdentificationService:
         """
         Create an agent with the specified prompt template and model.
         """
-        # Render the prompt with input_text
         prompt = prompt_template
         for k, v in input_text.items():
             prompt = prompt.replace(f"{{{{ {k} }}}}", str(v))
@@ -77,7 +75,6 @@ class FishIdentificationService:
         """Extract the essential content from an agent's response."""
         try:
             content = response['choices'][0]['message']['content']
-            # Remove markdown code block if present
             content = content.replace('```json', '').replace('```', '').strip()
             result = json.loads(content)
             return AgentResult(
@@ -94,10 +91,8 @@ class FishIdentificationService:
         if not name:
             return ""
         
-        # Convert to lowercase
         name = name.lower()
         
-        # Remove extra spaces
         name = ' '.join(name.split())
         
         # Remove special characters except spaces and dots

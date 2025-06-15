@@ -34,8 +34,7 @@ class CacheService:
         """
         if not result_log.flag:
             return
-            
-        # Check if entry already exists
+                    
         existing = db.query(CacheLog).filter(
             CacheLog.extracted_fish_name == result_log.extracted_fish_name
         ).first()
@@ -43,7 +42,6 @@ class CacheService:
         if existing:
             return
             
-        # Create new cache entry
         cache_entry = CacheLog(
             id=result_log.id,
             extracted_fish_name=result_log.extracted_fish_name,

@@ -4,7 +4,6 @@ import json
 from datetime import datetime
 import pandas as pd
 
-# API endpoints
 BASE_URL = "http://localhost:8000/api"
 
 def get_audit_logs():
@@ -25,23 +24,19 @@ def process_result_log(description: str):
     response = requests.post(f"{BASE_URL}/result/log", json=data)
     return response.json()
 
-# Set page config
 st.set_page_config(
     page_title="Fish Identification Demo",
     page_icon="🐟",
     layout="wide"
 )
 
-# Title
 st.title("🐟 Fish Identification Demo")
 
-# Create two columns for the layout
 col1, col2 = st.columns([2, 1])
 
 with col1:
     st.header("Chat Interface")
     
-    # Chat input
     user_input = st.text_area("Enter fish description:", height=100)
     
     if st.button("Process"):
@@ -62,10 +57,8 @@ with col1:
 with col2:
     st.header("Dashboard")
     
-    # Get audit logs
     audit_data = get_audit_logs()
     
-    # Display metrics
     st.subheader("System Statistics")
     col1, col2, col3 = st.columns(3)
     
@@ -76,7 +69,6 @@ with col2:
     with col3:
         st.metric("Cache Logs", audit_data["total_cache_logs"])
     
-    # Cache Logs Table
     st.subheader("Cache Logs")
     cache_logs = get_cache_logs()
     
