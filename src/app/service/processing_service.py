@@ -80,8 +80,8 @@ class ProcessingService:
                     "agent_3_result": agent3_result
                 }
     
-                filepath = self.file_service.save_processing_log(processing_log, str(db_log.id))
-                print(f"Results saved to: {filepath}")
+                # filepath = self.file_service.save_processing_log(processing_log, str(db_log.id))
+                # print(f"Results saved to: {filepath}")
 
                 return processing_log
             finally:
@@ -130,8 +130,8 @@ class ProcessingService:
                         from_cache=True
                     )
                     
-                    filepath = self.file_service.save_result_log(result_log, str(db_log.id))
-                    print(f"Cached results saved to: {filepath}")
+                    # filepath = self.file_service.save_result_log(result_log, str(db_log.id))
+                    # print(f"Cached results saved to: {filepath}")
                     
                     return result_log
             finally:
@@ -174,8 +174,8 @@ class ProcessingService:
                     from_cache=False
                 )
 
-                filepath = self.file_service.save_result_log(result_log, str(db_log.id))
-                print(f"Results saved to: {filepath}")
+                # filepath = self.file_service.save_result_log(result_log, str(db_log.id))
+                # print(f"Results saved to: {filepath}")
 
                 return result_log
             finally:

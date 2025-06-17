@@ -76,13 +76,14 @@ Database connection details:
 - Password: postgres
 
 ## Usage
+1. Run postgresql docker container
 
-1. Start the development server:
+2. Start the development server:
 ```bash
 make run
 ```
 
-2. Access the web interface at `http://localhost:8000`
+3. Access the web interface at `http://localhost:8000`
 
 ## Available Commands
 
