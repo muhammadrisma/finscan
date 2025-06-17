@@ -18,5 +18,24 @@ services:
       timeout: 5s
       retries: 5
 
+  finscan:
+    build: .
+    container_name: finscan-app
+    ports:
+      - "8000:8000"  # FastAPI
+      - "8501:8501"  # Streamlit
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/fishdb
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_API_BASE=${OPENROUTER_API_BASE}
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
 volumes:
   postgres_data: 

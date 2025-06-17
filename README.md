@@ -6,7 +6,7 @@ FinScan is a powerful financial scanning and analysis tool built with Python, le
 
 - 🤖 AI-powered financial analysis and insights
 - 🚀 FastAPI backend for robust API endpoints
-- 💻 Modern web interface using Gradio/Streamlit
+- 💻 Modern web interface using Streamlit
 - 🗄️ PostgreSQL database integration
 - ⚙️ Environment-based configuration
 - 📊 Real-time financial data processing
@@ -15,10 +15,8 @@ FinScan is a powerful financial scanning and analysis tool built with Python, le
 
 ## Prerequisites
 
-- Python 3.8 or higher
-- PostgreSQL database
+- Docker and Docker Compose
 - OpenAI API key (for LangChain integration)
-- Docker and Docker Compose (for database setup)
 
 ## Installation
 
@@ -28,10 +26,40 @@ git clone https://github.com/yourusername/finscan.git
 cd finscan
 ```
 
-2. Create and activate a virtual environment (recommended):
+2. Set up environment variables:
+Create a `.env` file in the project root with the following variables:
+```env
+OPENROUTER_API_KEY=your_api_key_here
+OPENROUTER_API_BASE=your_api_base_url_here
+DATABASE_URL = "postgresql+psycopg2://postgres:postgres@localhost:5432/fishdb"
+```
+
+3. Start the application:
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Or run in detached mode
+docker-compose up -d --build
+```
+
+The application will be available at:
+- Streamlit UI: http://localhost:8501
+- PostgreSQL Database:
+  - Host: localhost
+  - Port: 5432
+  - Database: fishdb
+  - Username: postgres
+  - Password: postgres
+
+## Development Setup
+
+If you prefer to run the application locally without Docker:
+
+1. Create and activate a virtual environment:
 ```bash
 # Using conda
-conda create -n finscan python=3.10 -y
+conda create -n finscan python=3.11 -y
 conda activate finscan
 
 # OR using venv
@@ -39,41 +67,49 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install the package:
+2. Install the package:
 ```bash
 pip install -e .
 ```
 
-4. Install requirements:
+3. Install requirements:
 ```bash
 make install
 ```
 
-5. Set up environment variables:
-Create a `.env` file in the project root with the following variables:
-```env
-OPENAI_API_KEY=your_api_key_here
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/fishdb
+4. Start the database:
+```bash
+docker-compose up -d postgres
 ```
 
-6. Set up the database:
+5. Initialize the database:
 ```bash
-# Start the PostgreSQL database
-docker-compose up -d
-
-# Wait a few seconds for the database to be ready
-sleep 5
-
-# Initialize the database tables
 make up-db
 ```
 
-Database connection details:
-- Host: localhost
-- Port: 5432
-- Database: fishdb
-- Username: postgres
-- Password: postgres
+6. Run the application:
+```bash
+# Run Streamlit UI
+make streamlit
+
+# Or run FastAPI backend
+make run
+```
+
+## Database Management
+
+The following Make commands are available for database management:
+
+```bash
+# Initialize database tables
+make up-db
+
+# Drop all database tables
+make down-db
+
+# Reset database (drop and recreate)
+make reset-db
+```
 
 ## Usage
 1. Run postgresql docker container
