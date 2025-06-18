@@ -16,24 +16,44 @@ class ProcessingService:
         self.cache_service = CacheService()
         self.audit_service = AuditService()
 
-    def process_log(self, extracted_fish_name: str):
+    def process_log(self, extracted_fish_name: str, no_peb: str, no_seri: str):
         """
         Process the input through all three agents and return a structured log.
         Args:
             extracted_fish_name: The extracted fish name to process
+            no_peb: The PEB number
+            no_seri: The serial number
         Returns:
             A dictionary containing the processing log with all agent results
         """
         try:
             db = SessionLocal()
             try:
-                found_in_cache, cached_latin_name = self.cache_service.get_cached_result(db, extracted_fish_name)
+                found_in_cache, cached_result = self.cache_service.get_cached_result(db, extracted_fish_name)
                 if found_in_cache:
+                    fish_name_english, fish_name_latin, cached_fish_name = cached_result
                     db_log = ProcessingLog(
                         original_description=extracted_fish_name,
-                        agent_1_result=json.dumps({"cached": True, "latin_name": cached_latin_name}),
-                        agent_2_result=json.dumps({"cached": True, "latin_name": cached_latin_name}),
-                        agent_3_result=json.dumps({"cached": True, "latin_name": cached_latin_name})
+                        no_peb=no_peb,
+                        no_seri=no_seri,
+                        agent_1_result=json.dumps({
+                            "cached": True,
+                            "fish_common_name": fish_name_english,
+                            "latin_name": fish_name_latin,
+                            "extracted_fish_name": cached_fish_name
+                        }),
+                        agent_2_result=json.dumps({
+                            "cached": True,
+                            "fish_common_name": fish_name_english,
+                            "latin_name": fish_name_latin,
+                            "extracted_fish_name": cached_fish_name
+                        }),
+                        agent_3_result=json.dumps({
+                            "cached": True,
+                            "fish_common_name": fish_name_english,
+                            "latin_name": fish_name_latin,
+                            "extracted_fish_name": cached_fish_name
+                        })
                     )
                     db.add(db_log)
                     db.commit()
@@ -43,9 +63,13 @@ class ProcessingService:
                     
                     return {
                         "id": db_log.id,
+                        "no_peb": no_peb,
+                        "no_seri": no_seri,
                         "original_description": extracted_fish_name,
                         "cached_result": True,
-                        "fish_name_latin": cached_latin_name
+                        "fish_name_english": fish_name_english,
+                        "fish_name_latin": fish_name_latin,
+                        "extracted_fish_name": cached_fish_name
                     }
             finally:
                 db.close()
@@ -62,6 +86,8 @@ class ProcessingService:
             try:
                 db_log = ProcessingLog(
                     original_description=extracted_fish_name,
+                    no_peb=no_peb,
+                    no_seri=no_seri,
                     agent_1_result=json.dumps(agent1_result.model_dump()),
                     agent_2_result=json.dumps(agent2_result.model_dump()),
                     agent_3_result=json.dumps(agent3_result.model_dump())
@@ -74,26 +100,27 @@ class ProcessingService:
                 
                 processing_log = {
                     "id": db_log.id,
+                    "no_peb": no_peb,
+                    "no_seri": no_seri,
                     "original_description": extracted_fish_name,
                     "agent_1_result": agent1_result,
                     "agent_2_result": agent2_result,
                     "agent_3_result": agent3_result
                 }
     
-                # filepath = self.file_service.save_processing_log(processing_log, str(db_log.id))
-                # print(f"Results saved to: {filepath}")
-
                 return processing_log
             finally:
                 db.close()
         except Exception as e:
             raise Exception(f"Error in processing log: {str(e)}")
 
-    def process_result_log(self, original_description: str):
+    def process_result_log(self, original_description: str, no_peb: str, no_seri: str):
         """
         Process the result log and check agent agreement.
         Args:
             original_description: The original product description
+            no_peb: The PEB number
+            no_seri: The serial number
         Returns:
             A ResultLogResponse object
         """
@@ -102,12 +129,14 @@ class ProcessingService:
             
             db = SessionLocal()
             try:
-                found_in_cache, cached_names = self.cache_service.get_cached_result(db, extracted_fish_name)
+                found_in_cache, cached_result = self.cache_service.get_cached_result(db, extracted_fish_name)
                 if found_in_cache:
-                    fish_name_english, fish_name_latin = cached_names
+                    fish_name_english, fish_name_latin, cached_fish_name = cached_result
                     
                     db_log = ResultLog(
                         original_description=original_description,
+                        no_peb=no_peb,
+                        no_seri=no_seri,
                         extracted_fish_name=extracted_fish_name,
                         fish_name_english=fish_name_english,
                         fish_name_latin=fish_name_latin,
@@ -122,6 +151,8 @@ class ProcessingService:
                     
                     result_log = ResultLogResponse(
                         id=db_log.id,
+                        no_peb=no_peb,
+                        no_seri=no_seri,
                         original_description=original_description,
                         extracted_fish_name=extracted_fish_name,
                         fish_name_english=fish_name_english,
@@ -130,14 +161,11 @@ class ProcessingService:
                         from_cache=True
                     )
                     
-                    # filepath = self.file_service.save_result_log(result_log, str(db_log.id))
-                    # print(f"Cached results saved to: {filepath}")
-                    
                     return result_log
             finally:
                 db.close()
 
-            processing_result = self.process_log(extracted_fish_name)
+            processing_result = self.process_log(extracted_fish_name, no_peb, no_seri)
             
             flag, fish_name_english, fish_name_latin, _ = self.fish_service.check_agent_agreement([
                 processing_result["agent_1_result"],
@@ -149,6 +177,8 @@ class ProcessingService:
             try:
                 db_log = ResultLog(
                     original_description=original_description,
+                    no_peb=no_peb,
+                    no_seri=no_seri,
                     extracted_fish_name=extracted_fish_name,
                     fish_name_english=fish_name_english,
                     fish_name_latin=fish_name_latin,
@@ -166,6 +196,8 @@ class ProcessingService:
                 
                 result_log = ResultLogResponse(
                     id=db_log.id,
+                    no_peb=no_peb,
+                    no_seri=no_seri,
                     original_description=original_description,
                     extracted_fish_name=extracted_fish_name,
                     fish_name_english=fish_name_english,
@@ -173,9 +205,6 @@ class ProcessingService:
                     flag=flag,
                     from_cache=False
                 )
-
-                # filepath = self.file_service.save_result_log(result_log, str(db_log.id))
-                # print(f"Results saved to: {filepath}")
 
                 return result_log
             finally:

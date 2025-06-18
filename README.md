@@ -145,12 +145,26 @@ The application provides the following REST API endpoints:
 
 ### Processing Logs
 - `POST /api/processing/log` - Create a new processing log
+  ```json
+  {
+    "original_description": "string",
+    "no_peb": "string",
+    "no_seri": "string"
+  }
+  ```
 - `GET /api/processing/logs` - Get all processing logs
 - `GET /api/processing/log/{log_id}` - Get a specific processing log
 - `DELETE /api/processing/log/{log_id}` - Delete a processing log
 
 ### Result Logs
 - `POST /api/result/log` - Create a new result log with agent agreement check
+  ```json
+  {
+    "original_description": "string",
+    "no_peb": "string",
+    "no_seri": "string"
+  }
+  ```
 - `GET /api/result/logs` - Get all result logs
 - `GET /api/result/log/{log_id}` - Get a specific result log
 - `DELETE /api/result/log/{log_id}` - Delete a result log

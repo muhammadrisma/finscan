@@ -23,6 +23,8 @@ class ProcessingLog(Base):
     __tablename__ = "processing_log"
 
     id = Column(Integer, Sequence('processing_log_id_seq'), primary_key=True)
+    no_peb = Column(String)
+    no_seri = Column(String)
     original_description = Column(String)
     agent_1_result = Column(String) # json result
     agent_2_result = Column(String) # json result
@@ -32,6 +34,8 @@ class ResultLog(Base):
     __tablename__ = "result_log"
 
     id = Column(Integer, Sequence('result_log_id_seq'), primary_key=True)
+    no_peb = Column(String)
+    no_seri = Column(String)
     original_description = Column(String)
     extracted_fish_name = Column(String)
     fish_name_english = Column(String)

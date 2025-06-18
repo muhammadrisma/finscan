@@ -5,7 +5,7 @@ class CacheService:
     def __init__(self):
         pass
 
-    def get_cached_result(self, db: Session, extracted_fish_name: str) -> tuple[bool, tuple[str, str] | None]:
+    def get_cached_result(self, db: Session, extracted_fish_name: str) -> tuple[bool, tuple[str, str, str] | None]:
         """
         Check if the extracted fish name exists in cache and return the cached result if found.
         
@@ -14,14 +14,18 @@ class CacheService:
             extracted_fish_name: The extracted fish name to look up
             
         Returns:
-            Tuple of (found_in_cache: bool, (fish_name_english: str, fish_name_latin: str) | None)
+            Tuple of (found_in_cache: bool, (fish_name_english: str, fish_name_latin: str, extracted_fish_name: str) | None)
         """
         cached_entry = db.query(CacheLog).filter(
             CacheLog.extracted_fish_name == extracted_fish_name
         ).first()
         
         if cached_entry:
-            return True, (cached_entry.fish_name_english, cached_entry.fish_name_latin)
+            return True, (
+                cached_entry.fish_name_english,
+                cached_entry.fish_name_latin,
+                cached_entry.extracted_fish_name
+            )
         return False, None
 
     def add_to_cache(self, db: Session, result_log: ResultLog) -> None:

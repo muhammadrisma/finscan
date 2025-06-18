@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 
 from app.schema.processing_log import ProcessingLogRequest, ProcessingLogResponse, ProcessingLogDBResponse
 from app.schema.result_log import ResultLogRequest, ResultLogResponse, ResultLogDBResponse
@@ -24,7 +25,11 @@ async def create_processing_log(request: ProcessingLogRequest, db: Session = Dep
     Create a new processing log by running the input through all agents.
     """
     try:
-        result = processing_service.process_log(request.original_description)
+        result = processing_service.process_log(
+            request.original_description,
+            request.no_peb,
+            request.no_seri
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -59,7 +64,11 @@ async def create_result_log(request: ResultLogRequest, db: Session = Depends(get
     Create a new result log with agent agreement check.
     """
     try:
-        result = processing_service.process_result_log(request.original_description)
+        result = processing_service.process_result_log(
+            request.original_description,
+            request.no_peb,
+            request.no_seri
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -132,7 +141,14 @@ async def get_latest_audit_log(db: Session = Depends(get_db)):
             "total_cache_logs": audit_log.total_cache_logs
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting latest audit log: {str(e)}")
+        # Return a default response instead of raising an error
+        return {
+            "id": datetime.now(),
+            "total_processing_logs": 0,
+            "total_result_logs": 0,
+            "total_cache_logs": 0
+        }
 
 @router.get("/cache/logs", response_model=List[dict])
 async def get_cache_logs(db: Session = Depends(get_db)):
