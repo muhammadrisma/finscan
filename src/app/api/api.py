@@ -6,6 +6,7 @@ from datetime import datetime
 from app.schema.processing_log import ProcessingLogRequest, ProcessingLogResponse, ProcessingLogDBResponse
 from app.schema.result_log import ResultLogRequest, ResultLogResponse, ResultLogDBResponse
 from app.schema.audit_log import AuditLogResponse
+from app.schema.top_fish import TopFishResponse
 from app.service.processing_service import ProcessingService
 from app.service.audit_service import AuditService
 from app.db.database import get_db, ProcessingLog, ResultLog, CacheLog
@@ -142,7 +143,6 @@ async def get_latest_audit_log(db: Session = Depends(get_db)):
         }
     except Exception as e:
         logger.error(f"Error getting latest audit log: {str(e)}")
-        # Return a default response instead of raising an error
         return {
             "id": datetime.now(),
             "total_processing_logs": 0,
@@ -168,3 +168,29 @@ async def get_cache_logs(db: Session = Depends(get_db)):
         ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/result/top-fish", response_model=TopFishResponse)
+async def get_top_fish(db: Session = Depends(get_db)):
+    """
+    Get the top 5 most frequently identified fish.
+    """
+    try:
+        top_fish = audit_service.get_top_fish(db)
+        if not top_fish:
+            return {"items": []}
+        
+        formatted_items = []
+        for fish in top_fish:
+            item = {
+                "fish_name_english": fish["fish_name_english"],
+                "fish_name_latin": fish["fish_name_latin"],
+                "count": fish["count"]
+            }
+            formatted_items.append(item)
+        
+        return {"items": formatted_items}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching top fish data: {str(e)}"
+        )

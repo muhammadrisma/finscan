@@ -1,4 +1,6 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+from app.setting.setting import LIMIT
 from app.db.database import AuditLog, ProcessingLog, ResultLog, CacheLog
 from datetime import datetime
 
@@ -44,4 +46,34 @@ class AuditService:
                 total_processing_logs=0,
                 total_result_logs=0,
                 total_cache_logs=0
-            ) 
+            )
+
+    def get_top_fish(self, db: Session):
+        """Get top N identified fish based on result logs"""
+        try:
+            top_fish = db.query(
+                ResultLog.fish_name_english,
+                ResultLog.fish_name_latin,
+                func.count(ResultLog.id).label('count')
+            ).filter(
+                ResultLog.fish_name_english.isnot(None),
+                ResultLog.fish_name_latin.isnot(None),
+                ResultLog.flag == True
+            ).group_by(
+                ResultLog.fish_name_english,
+                ResultLog.fish_name_latin
+            ).order_by(
+                func.count(ResultLog.id).desc()
+            ).limit(LIMIT).all()
+
+            result = []
+            for fish in top_fish:
+                result.append({
+                    "fish_name_english": fish.fish_name_english,
+                    "fish_name_latin": fish.fish_name_latin,
+                    "count": fish.count
+                })
+            return result
+        except Exception as e:
+            print(f"Error in get_top_fish: {str(e)}")
+            return [] 
