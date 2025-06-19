@@ -18,11 +18,16 @@ COPY . .
 # Install the package in development mode
 RUN pip install -e .
 
-# Make the startup script executable
-RUN chmod +x start.sh
-
 # Expose ports for both FastAPI and Streamlit
 EXPOSE 8000 8501
 
 # Command to run the startup script
-CMD ["./start.sh"] 
+CMD sh -c '\
+  echo "Waiting for database to be ready..." && \
+  while ! nc -z postgres 5432; do sleep 1; done && \
+  echo "Database is ready!" && \
+  echo "Initializing database..." && \
+  python -m src.app.db.init_db && \
+  echo "Starting services..." && \
+  uvicorn src.app.app:app --host 0.0.0.0 --port 8000 & \
+  streamlit run src/app/demo/demo.py --server.address 0.0.0.0' 
