@@ -1,5 +1,6 @@
 import json
 import time
+import logging
 
 from app.core.fish_identification_service import FishIdentificationService
 from app.core.text_extraction_service import TextExtractionService
@@ -9,6 +10,8 @@ from app.db.database import SessionLocal, ProcessingLog, ResultLog
 from app.service.cache_service import CacheService
 from app.service.audit_service import AuditService
 
+logger = logging.getLogger(__name__)
+
 class ProcessingService:
     def __init__(self):
         self.fish_service = FishIdentificationService()
@@ -16,12 +19,14 @@ class ProcessingService:
         self.file_service = FileService()
         self.cache_service = CacheService()
         self.audit_service = AuditService()
+        logger.info("ProcessingService initialized successfully.")
 
     def process_log(self, extracted_fish_name: str, no_peb: str, no_seri: str):
         """
         Process the input through all three agents and return a structured log.
         Temporarily save results to file instead of DB.
         """
+        logger.info(f"Processing log for extracted fish name: '{extracted_fish_name}', PEB: '{no_peb}', SERI: '{no_seri}'")
         try:
             # Simulate an ID using timestamp
             temp_id = str(int(time.time() * 1000))
@@ -71,13 +76,17 @@ class ProcessingService:
             #         }
             # finally:
             #     db.close()
+            logger.info("Calling agents for fish identification.")
             agent1_response = self.fish_service.agent1(extracted_fish_name)
             agent2_response = self.fish_service.agent2(extracted_fish_name)
             agent3_response = self.fish_service.agent3(extracted_fish_name)
+            logger.info("Received responses from all agents.")
 
+            logger.info("Extracting content from agent responses.")
             agent1_result = self.fish_service.extract_agent_content(agent1_response)
             agent2_result = self.fish_service.extract_agent_content(agent2_response)
             agent3_result = self.fish_service.extract_agent_content(agent3_response)
+            logger.info("Successfully extracted content from all agent responses.")
             db = SessionLocal()
             # try:
             #     db_log = ProcessingLog(
@@ -104,10 +113,12 @@ class ProcessingService:
             }
 
             self.file_service.save_processing_log(processing_log, temp_id)
+            logger.info(f"Successfully processed log for extracted fish name: '{extracted_fish_name}'.")
             return processing_log
             # finally:
             #     db.close()
         except Exception as e:
+            logger.error(f"Error in process_log for '{extracted_fish_name}': {str(e)}", exc_info=True)
             raise Exception(f"Error in processing log: {str(e)}")
 
     def process_result_log(self, original_description: str, no_peb: str, no_seri: str):
@@ -115,18 +126,23 @@ class ProcessingService:
         Process the result log and check agent agreement.
         Temporarily save results to file instead of DB.
         """
+        logger.info(f"Processing result log for description: '{original_description}', PEB: '{no_peb}', SERI: '{no_seri}'")
         try:
             # Simulate an ID using timestamp
             temp_id = str(int(time.time() * 1000))
+            logger.info("Extracting fish name from description.")
             extracted_fish_name = self.text_service.extract_text(original_description)
+            logger.info(f"Extracted fish name: '{extracted_fish_name}'")
 
             processing_result = self.process_log(extracted_fish_name, no_peb, no_seri)
 
+            logger.info("Checking agent agreement.")
             flag, fish_name_english, fish_name_latin, _ = self.fish_service.check_agent_agreement([
                 processing_result["agent_1_result"],
                 processing_result["agent_2_result"],
                 processing_result["agent_3_result"]
             ])
+            logger.info(f"Agent agreement check completed. Flag: {flag}, English: '{fish_name_english}', Latin: '{fish_name_latin}'")
 
             result_log = ResultLogResponse(
                 id=temp_id,
@@ -140,6 +156,8 @@ class ProcessingService:
                 from_cache=False
             )
             self.file_service.save_result_log(result_log, temp_id)
+            logger.info(f"Successfully processed result log for description: '{original_description}'.")
             return result_log
         except Exception as e:
+            logger.error(f"Error in process_result_log for '{original_description}': {str(e)}", exc_info=True)
             raise Exception(f"Error in processing result log: {str(e)}") 
