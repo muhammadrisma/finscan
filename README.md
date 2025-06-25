@@ -92,10 +92,10 @@ make up-db
 # Run Streamlit UI
 make streamlit
 
-# Or run FastAPI backend
+# Run FastAPI backend
 make run
 ```
-
+7. Tes The Notebook
 ## Database Management
 
 The following Make commands are available for database management:
